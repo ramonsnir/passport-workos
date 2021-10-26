@@ -10,19 +10,19 @@ export interface WorkOSStrategyOptions {
 
 export type WorkOSStrategyVerifierCallback<User> = WorkOSStrategy<User>['verified'];
 
-export type WorkOSStrategyVerifier<User> = (req: Request, profile: Profile, callback: WorkOSStrategyVerifierCallback<User>) => void;
+export type WorkOSStrategyVerifier<User> = (req: Request, access_token: string, profile: Profile, callback: WorkOSStrategyVerifierCallback<User>) => void;
 
 export class WorkOSStrategy<User = any> extends passport.Strategy {
-    _options: WorkOSStrategyOptions;
-    _verifier: WorkOSStrategyVerifier<User>;
+    private options: WorkOSStrategyOptions;
+    private verifier: WorkOSStrategyVerifier<User>;
 
     constructor(options: WorkOSStrategyOptions, verifier: WorkOSStrategyVerifier<User>) {
         super();
-        this._options = options;
-        this._verifier = verifier;
+        this.options = options;
+        this.verifier = verifier;
     }
 
-    verified = (err?: Error, user?: User, status?: number) => {
+    private verified = (err?: Error, user?: User, status?: number) => {
         if (err) {
             this.error(err);
         } else if (!user) {
@@ -33,18 +33,22 @@ export class WorkOSStrategy<User = any> extends passport.Strategy {
     };
 
     async authenticate(req: Request): Promise<void> {
-        const code = req.query.code as (string | undefined);
+        try {
+            const code = req.query.code as (string | undefined);
 
-        if (!code) {
-            this.fail(401);
-            return;
+            if (!code) {
+                this.fail(401);
+                return;
+            }
+
+            const { access_token, profile } = await this.options.workos.sso.getProfileAndToken({
+                code,
+                clientID: this.options.clientID,
+            });
+
+            this.verifier(req, access_token, profile, this.verified);
+        } catch (err: any) {
+            this.error(err);
         }
-
-        const { profile } = await this._options.workos.sso.getProfileAndToken({
-            code,
-            clientID: this._options.clientID,
-        });
-
-        this._verifier(req, profile, this.verified);
     }
 }
