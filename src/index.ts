@@ -10,7 +10,7 @@ export interface WorkOSStrategyOptions {
 
 export type WorkOSStrategyVerifierCallback<User> = WorkOSStrategy<User>['verified'];
 
-export type WorkOSStrategyVerifier<User> = (req: Request, access_token: string, profile: Profile, callback: WorkOSStrategyVerifierCallback<User>) => void;
+export type WorkOSStrategyVerifier<User> = (req: Request, accessToken: string, profile: Profile, callback: WorkOSStrategyVerifierCallback<User>) => void;
 
 export class WorkOSStrategy<User = any> extends passport.Strategy {
     private options: WorkOSStrategyOptions;
@@ -41,12 +41,12 @@ export class WorkOSStrategy<User = any> extends passport.Strategy {
                 return;
             }
 
-            const { access_token, profile } = await this.options.workos.sso.getProfileAndToken({
+            const { access_token: accessToken, profile } = await this.options.workos.sso.getProfileAndToken({
                 code,
                 clientID: this.options.clientID,
             });
 
-            this.verifier(req, access_token, profile, this.verified);
+            this.verifier(req, accessToken, profile, this.verified);
         } catch (err: any) {
             this.error(err);
         }
