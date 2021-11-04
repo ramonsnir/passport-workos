@@ -8,7 +8,7 @@ export interface WorkOSStrategyOptions {
     clientID: string;
 }
 
-export type WorkOSStrategyVerifierCallback<User> = WorkOSStrategy<User>['verified'];
+export type WorkOSStrategyVerifierCallback<User> = (err?: Error, user?: User, status?: number) => void;
 
 export type WorkOSStrategyVerifier<User> = (req: Request, accessToken: string, profile: Profile, callback: WorkOSStrategyVerifierCallback<User>) => void;
 
@@ -21,16 +21,6 @@ export class WorkOSStrategy<User = any> extends passport.Strategy {
         this.options = options;
         this.verifier = verifier;
     }
-
-    private verified = (err?: Error, user?: User, status?: number) => {
-        if (err) {
-            this.error(err);
-        } else if (!user) {
-            this.fail(status ?? 401);
-        } else {
-            this.success(user);
-        }
-    };
 
     async authenticate(req: Request): Promise<void> {
         try {
@@ -46,7 +36,15 @@ export class WorkOSStrategy<User = any> extends passport.Strategy {
                 clientID: this.options.clientID,
             });
 
-            this.verifier(req, accessToken, profile, this.verified);
+            this.verifier(req, accessToken, profile, (err?: Error, user?: User, status?: number) => {
+                if (err) {
+                    this.error(err);
+                } else if (!user) {
+                    this.fail(status ?? 401);
+                } else {
+                    this.success(user);
+                }
+            });
         } catch (err: any) {
             this.error(err);
         }
