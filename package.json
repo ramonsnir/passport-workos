@@ -1,6 +1,6 @@
 {
     "name": "passport-workos-2",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Passport.js strategy for WorkOS",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
